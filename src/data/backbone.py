@@ -43,6 +43,7 @@ class RestorationData(data.Dataset):
             raise IndexError('both lists should have the same lengths.')
 
         if method == 'predecode':
+            print('Decoding the images...')
             img_input_bin = []
             for img in tqdm.tqdm(self.img_input):
                 bin_name = img.replace('png', 'bin')
