@@ -68,6 +68,21 @@ def augment(x, y, hflip=True, vflip=True, rot=True):
 
     '''
     # Advanced: Finish the implementation
+    do_hflip = hflip and random.random() < 0.5
+    do_vflip = vflip and random.random() < 0.5
+    do_rot = rot and random.random() < 0.5
+
+    if do_hflip:
+        x = x[:, ::-1]
+        y = y[:, ::-1]
+
+    if do_vflip:
+        x = x[::-1]
+        y = y[::-1]
+
+    if do_rot:
+        x = np.transpose(x, (1, 0, 2))
+        y = np.transpose(y, (1, 0, 2))
 
     return x, y
 
@@ -87,18 +102,16 @@ def to_tensor(x, y):
     # Finish the implementation
     x = np.transpose(x, (2, 0, 1))
     # C x H x W / uint8
-    x = x.astype(np.float)
     # For efficient memory allocation...
     x = np.ascontiguousarray(x)
     # Now we have torch.FloatTensor [0, 255]
-    x = torch.from_numpy(x)
+    x = torch.from_numpy(x).float()
     x /= 127.5      # [0, 2]
     x -= 1          # [-1, 1]
 
     y = np.transpose(y, (2, 0, 1))
-    y = y.astype(np.float)
     y = np.ascontiguousarray(y)
-    y = torch.from_numpy(y)
+    y = torch.from_numpy(y).float()
     y /= 127.5      # [0, 2]
     y -= 1          # [-1, 1]
 
