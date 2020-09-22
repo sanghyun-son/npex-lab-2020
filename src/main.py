@@ -21,7 +21,7 @@ parser.add_argument('-t', '--target', type=utils.dir_path)
 parser.add_argument('-e', '--epochs', type=int, default=20)
 parser.add_argument('-s', '--save', type=str, default='test')
 cfg = parser.parse_args()
-seed = 20190715
+seed = 20200922
 
 
 def main():
@@ -47,13 +47,6 @@ def main():
     # Make a CNN
     net = simple.Simple()
     net = net.to(device)
-    # Will be supported later...
-    '''
-    writer.add_graph(
-        net,
-        input_to_model=torch.randn(1, 3, 64, 64).to(device),
-    )
-    '''
 
     # Set up an optimizer
     params = [p for p in net.parameters() if p.requires_grad]
