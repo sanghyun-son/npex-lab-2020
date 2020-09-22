@@ -23,13 +23,13 @@ def main():
     writer.add_image('img_input', utils.quantize(img_input))
     writer.add_image('img_target', utils.quantize(img_target))
 
-    dir_input = '../dataset/DIV2K/DIV2K_train_HR'
-    dir_target = '../dataset/DIV2K/DIV2K_train_HR'
+    dir_input = '../dataset/DIV2K_sub/train/input'
+    dir_target = '../dataset/DIV2K_sub/train/target'
     data_test = backbone.RestorationData(dir_input, dir_target, method='direct')
     x, y = data_test[0]
     writer.add_image('patch_input', utils.quantize(x)) 
     writer.add_image('patch_target', utils.quantize(y)) 
-
+    writer.close()
 
 if __name__ == '__main__':
     main()
