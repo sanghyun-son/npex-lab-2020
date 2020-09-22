@@ -1,10 +1,11 @@
 import glob
 import numpy as np
 import imageio
+import tqdm
 
-img_list = sorted(glob.glob('../DIV2K_sub/eval/target/*.png'))
+img_list = sorted(glob.glob('../dataset/DIV2K_sub/eval/target/*.png'))
 
-for img_name in img_list:
+for img_name in tqdm.tqdm(img_list, ncols=80):
     # img: np.uint8
     img = imageio.imread(img_name).astype(np.float)
     n = 20 * np.random.randn(*img.shape)    # np.float
