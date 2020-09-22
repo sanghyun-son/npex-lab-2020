@@ -1,11 +1,12 @@
 import torch
 from torch import nn
 
-class Simple(nn.Module):
 
+class Net(nn.Module):
     '''
     A simple image2image CNN.
     '''
+
     def __init__(self):
         # This line is very important!
         super().__init__()
@@ -20,6 +21,7 @@ class Simple(nn.Module):
         self.relu3 = nn.ReLU(inplace=True)
 
         self.conv4 = nn.Conv2d(64, 3, 3, padding=1)
+        return
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         '''

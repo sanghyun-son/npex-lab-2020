@@ -26,6 +26,7 @@ parser.add_argument('-t', '--target', type=utils.dir_path)
 parser.add_argument('-e', '--epochs', type=int, default=20)
 parser.add_argument('-s', '--save', type=str, default='test')
 parser.add_argument('-u', '--sub_save', type=str)
+parser.add_argument('-p', '--patch_size', type=int, default=64)
 parser.add_argument('-m', '--model', type=str, default='simple')
 cfg = parser.parse_args()
 seed = 20200922
@@ -44,7 +45,7 @@ def main():
             '../dataset/DIV2K_sub/train/target',
             '../dataset/DIV2K_sub/train/target',
             training=True,
-            p=64,
+            p=cfg.patch_size,
         ),
         batch_size=16,
         shuffle=True,
@@ -78,7 +79,7 @@ def main():
 
     # Make a CNN
     net_module = importlib.import_module('.' + cfg.model, package='model')
-    net = net_module.RestorationNet()
+    net = net_module.Net()
     net = net.to(device)
     print(net)
 
@@ -157,7 +158,9 @@ def main():
 
             avg_loss /= len(loader_eval)
             avg_psnr /= len(loader_eval)
-
+            print('Avg. loss: {:.4f} / Avg. PSNR: {:.2f}'.format(
+                avg_loss, avg_psnr,
+            ))
             # Tensorboard logging for evaluation
             writer.add_scalar(
                 'evaluation_loss',
