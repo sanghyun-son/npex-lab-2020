@@ -23,7 +23,7 @@ import tqdm
 parser = argparse.ArgumentParser('NPEX Image Restoration Lab')
 parser.add_argument('-i', '--input', type=utils.dir_path)
 parser.add_argument('-t', '--target', type=utils.dir_path)
-parser.add_argument('-e', '--epochs', type=int, default=20)
+parser.add_argument('-e', '--epochs', type=int, default=10)
 parser.add_argument('-s', '--save', type=str, default='test')
 parser.add_argument('-u', '--sub_save', type=str)
 parser.add_argument('-p', '--patch_size', type=int, default=64)
@@ -112,7 +112,7 @@ def main():
 
             total_iteration += 1
             # Tensorboard batch logging
-            if total_iteration % 100 == 0:
+            if total_iteration % 100 == 0 and total_iteration <= 1000:
                 writer.add_images(
                     'training_input',
                     utils.quantize(x.cpu()),
@@ -185,6 +185,7 @@ def main():
         # Learning rate adjustment
         scheduler.step()
 
+    writer.close()
 
 if __name__ == '__main__':
     main()
