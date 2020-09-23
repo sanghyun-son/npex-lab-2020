@@ -9,6 +9,8 @@ from data import backbone
 from data import noisy
 
 import torch
+from torch import nn
+from torch.nn import functional
 from torch import optim
 from torch.nn import functional as F
 from torch.optim import lr_scheduler
@@ -130,7 +132,6 @@ def main():
                 )
 
             writer.add_scalar('training_loss', loss.item(), global_step=total_iteration)
-
 
     def do_eval(epoch: int):
         net.eval()
