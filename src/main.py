@@ -23,8 +23,7 @@ import tqdm
 
 # Argument parsing
 parser = argparse.ArgumentParser('NPEX Image Restoration Lab')
-parser.add_argument('-i', '--input', type=utils.dir_path)
-parser.add_argument('-t', '--target', type=utils.dir_path)
+parser.add_argument('-d', '--dataset', type=str, default='DIV2K_sub')
 parser.add_argument('-e', '--epochs', type=int, default=10)
 parser.add_argument('-s', '--save', type=str, default='test')
 parser.add_argument('-u', '--sub_save', type=str)
@@ -44,8 +43,8 @@ def main():
     # Define your dataloader here
     loader_train = DataLoader(
         noisy.NoisyData(
-            '../dataset/DIV2K_sub/train/target',
-            '../dataset/DIV2K_sub/train/target',
+            '../dataset/{}/train/target'.format(cfg.dataset),
+            '../dataset/{}/train/target'.format(cfg.dataset),
             training=True,
             p=cfg.patch_size,
         ),
@@ -56,8 +55,8 @@ def main():
     )
     loader_eval = DataLoader(
         noisy.NoisyData(
-            '../dataset/DIV2K_sub/eval/input',
-            '../dataset/DIV2K_sub/eval/target',
+            '../dataset/{}/eval/input'.format(cfg.dataset),
+            '../dataset/{}/eval/target'.format(cfg.dataset),
             training=False,
         ),
         batch_size=1,
