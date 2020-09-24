@@ -7,6 +7,7 @@ import importlib
 import utils
 from data import backbone
 from data import noisy
+from model import discriminator
 
 import torch
 from torch import nn
@@ -30,6 +31,7 @@ parser.add_argument('-s', '--save', type=str, default='test')
 parser.add_argument('-u', '--sub_save', type=str)
 parser.add_argument('-p', '--patch_size', type=int, default=64)
 parser.add_argument('-m', '--model', type=str, default='simple')
+parser.add_argument('-g', '--gan', action='store_true')
 parser.add_argument('--pretrained', type=str)
 cfg = parser.parse_args()
 seed = 20200922
@@ -132,6 +134,17 @@ def main():
         gamma=0.5,
     )
 
+    if cfg.gan:
+        dis = discriminator.Discriminator()
+        dis = dis.to(device)
+        dis_params = [p for p in dis.parameters() if p.requires_grad]
+        dis_optimizer = optim.Adam(dis_params, lr=1e-4)
+        dis_scheduler = lr_scheduler.MultiStepLR(
+            dis_optimizer,
+            milestones=[int(0.5 * cfg.epochs), int(0.75 * cfg.epochs)],
+            gamma=0.5,
+        )
+
     def do_train(epoch: int):
         global total_iteration
         print('Epoch {}'.format(epoch))
@@ -143,7 +156,36 @@ def main():
 
             optimizer.zero_grad()
             y = net(x)
-            loss = F.mse_loss(y, t)
+            loss = F.l1_loss(y, t)
+
+            # We will implement GAN
+            if cfg.gan:
+                # Reset the discrimator gradient
+                dis_optimizer.zero_grad()
+                dis_real = dis(t)
+                dis_fake = dis(y.detach())  # For technical issue
+                target_real = torch.ones_like(dis_real)
+                target_fake = torch.zeros_like(dis_fake)
+                dis_loss_real = F.binary_cross_entropy_with_logits(
+                    dis_real, target_real
+                )
+                dis_loss_fake = F.binary_cross_entropy_with_logits(
+                    dis_fake, target_fake
+                )
+                dis_loss = dis_loss_real + dis_loss_fake
+                
+                # Backpropagation
+                dis_loss.backward()
+                dis_optimizer.step()
+            
+                #gen_loss_naive = -(dis(y).sigmoid()).log().mean()
+                dis_gen = dis(y)
+                target_gen = torch.ones_like(dis_gen)
+                gen_loss = F.binary_cross_entropy_with_logits(
+                    dis_gen, target_gen
+                )
+                loss = loss + 0.01 * gen_loss
+
             tq.set_description('{:.4f}'.format(loss.item()))
             loss.backward()
             optimizer.step()
@@ -167,7 +209,29 @@ def main():
                     global_step=total_iteration
                 )
 
-            writer.add_scalar('training_loss', loss.item(), global_step=total_iteration)
+            if total_iteration % 10 == 0:
+                writer.add_scalar('training_loss', loss.item(), global_step=total_iteration)
+                if cfg.gan:
+                    writer.add_scalar(
+                        'training_dis_real',
+                        dis_loss_real.item(),
+                        global_step=total_iteration,
+                    )
+                    writer.add_scalar(
+                        'training_dis_fake',
+                        dis_loss_fake.item(),
+                        global_step=total_iteration,
+                    )
+                    writer.add_scalar(
+                        'training_dis_loss',
+                        dis_loss.item(),
+                        global_step=total_iteration,
+                    )
+                    writer.add_scalar(
+                        'training_gen',
+                        gen_loss.item(),
+                        global_step=total_iteration,
+                    )
 
     def do_eval(epoch: int):
         net.eval()
