@@ -6,6 +6,7 @@ import importlib
 
 import imageio
 import numpy as np
+import tqdm
 
 import torch
 from torch import cuda
@@ -33,6 +34,38 @@ def main() -> None:
     print(net)
 
     # Implement below
+    if cfg.pretrained is not None:
+        ckp = torch.load(cfg.pretrained)
+        model_state = ckp['model']
+        net.load_state_dict(model_state, strict=True)
+
+    # Important!
+    net.eval()
+    for img in tqdm.tqdm(imgs, ncols=80):
+        x = imageio.imread(img)
+        x = np.transpose(x, (2, 0, 1))
+        x = np.ascontiguousarray(x)
+        x = torch.from_numpy(x)
+        x = x.unsqueeze(0)
+        x = x.float()
+        x = x.to(device)
+        x = x / 127.5 - 1
+
+        y = net(x)
+
+        y = 127.5 * (y + 1)
+        y = y.round()
+        y = y.clamp(min=0, max=255)
+        y = y.byte()
+        y = y.squeeze(0)
+        y = y.cpu()
+        y = y.numpy()
+        y = np.transpose(y, (1, 2, 0))
+
+        name = path.basename(img)
+        save_as = path.join(cfg.output, name)
+        imageio.imwrite(save_as, y)
+
     return
 
 if __name__ == '__main__':

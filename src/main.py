@@ -24,11 +24,13 @@ import tqdm
 # Argument parsing
 parser = argparse.ArgumentParser('NPEX Image Restoration Lab')
 parser.add_argument('-d', '--dataset', type=str, default='DIV2K_sub')
+parser.add_argument('--scale', type=int, default=1)
 parser.add_argument('-e', '--epochs', type=int, default=10)
 parser.add_argument('-s', '--save', type=str, default='test')
 parser.add_argument('-u', '--sub_save', type=str)
 parser.add_argument('-p', '--patch_size', type=int, default=64)
 parser.add_argument('-m', '--model', type=str, default='simple')
+parser.add_argument('--pretrained', type=str)
 cfg = parser.parse_args()
 seed = 20200922
 total_iteration = 0
@@ -41,29 +43,55 @@ def main():
     torch.manual_seed(seed)
 
     # Define your dataloader here
-    loader_train = DataLoader(
-        noisy.NoisyData(
-            '../dataset/{}/train/target'.format(cfg.dataset),
-            '../dataset/{}/train/target'.format(cfg.dataset),
-            training=True,
-            p=cfg.patch_size,
-        ),
-        batch_size=16,
-        shuffle=True,
-        num_workers=4,
-        pin_memory=True,
-    )
-    loader_eval = DataLoader(
-        noisy.NoisyData(
-            '../dataset/{}/eval/input'.format(cfg.dataset),
-            '../dataset/{}/eval/target'.format(cfg.dataset),
-            training=False,
-        ),
-        batch_size=1,
-        shuffle=False,
-        num_workers=4,
-        pin_memory=True,
-    )
+    if cfg.scale == 1:
+        loader_train = DataLoader(
+            noisy.NoisyData(
+                '../dataset/{}/train/target'.format(cfg.dataset),
+                '../dataset/{}/train/target'.format(cfg.dataset),
+                training=True,
+                p=cfg.patch_size,
+            ),
+            batch_size=16,
+            shuffle=True,
+            num_workers=4,
+            pin_memory=True,
+        )
+        loader_eval = DataLoader(
+            noisy.NoisyData(
+                '../dataset/{}/eval/input'.format(cfg.dataset),
+                '../dataset/{}/eval/target'.format(cfg.dataset),
+                training=False,
+            ),
+            batch_size=1,
+            shuffle=False,
+            num_workers=4,
+            pin_memory=True,
+        )
+    else:
+        loader_train = DataLoader(
+            backbone.RestorationData(
+                '../dataset/{}/train/input_x{}'.format(cfg.dataset, cfg.scale),
+                '../dataset/{}/train/target'.format(cfg.dataset),
+                training=True,
+                p=cfg.patch_size,
+            ),
+            batch_size=16,
+            shuffle=True,
+            num_workers=4,
+            pin_memory=True,
+        )
+        loader_eval = DataLoader(
+            backbone.RestorationData(
+                '../dataset/{}/eval/input_x{}'.format(cfg.dataset, cfg.scale),
+                '../dataset/{}/eval/target'.format(cfg.dataset),
+                training=False,
+            ),
+            batch_size=1,
+            shuffle=False,
+            num_workers=4,
+            pin_memory=True,
+        )
+
 
     log_dir = path.join('..', 'experiment', cfg.save)
     if cfg.sub_save:
@@ -83,6 +111,15 @@ def main():
     net = net_module.Net()
     net = net.to(device)
     print(net)
+
+    if cfg.pretrained is not None:
+        ckp = torch.load(cfg.pretrained)
+        model_state = ckp['model']
+        logs = net.load_state_dict(model_state, strict=False)
+        print('Missing keys:')
+        print(logs.missing_keys)
+        print('Unexpected keys:')
+        print(logs.unexpected_keys)
 
     # Set up an optimizer
     params = [p for p in net.parameters() if p.requires_grad]
